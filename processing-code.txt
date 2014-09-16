@@ -1,0 +1,464 @@
+/**
+      Change the mode to change the fractal.
+      0 = Mandelbrot set. RE and IM will not be used.
+      1 = uses iterative function f(Z) = Z + C, where C is (RE + IM*i)
+      2 = uses iterative function f(Z) = Z^2 + C, where C is (RE + IM*i)
+      3 = uses iterative function f(Z) = Z^3 + C, where C is (RE + IM*i)
+      4 = uses iterative function f(Z) = Z^4 + C, where C is (RE + IM*i)
+      5 = uses iterative function f(Z) = Z^5 + C, where C is (RE + IM*i)
+      6 = uses iterative function f(Z) = ???C???, where C is (RE + IM*i)
+      //THIS IS WHERE THE PROGRAM WILL SLOW DOWN
+      7 = uses iterative function f(Z) = exp(Z) + C, where C is (RE + IM*i)
+      8 = uses iterative function f(Z) = Z*exp(Z) + C, where C is (RE + IM*i)
+      //DONT EVEN TRY THIS
+      9 = uses iterative function f(Z) = sinh(Z) + C, where C is (RE + IM*i)
+      
+      Pressing Z will create a random complex number from (-2, -2i) to (2, 2i)
+      Pressing X will create a random real number from -2 to 2
+**/
+int mode = 0;
+double RE = 0;
+double IM = 0;
+float colorBoost = 4; //how much color you want the fractal to have
+
+/**
+    DON'T CHANGE ANYTHING BELOW HERE
+**/
+
+// Establish a range of values on the complex plane
+// A different range will allow us to "zoom" in or out on the fractal
+// float xmin = -1.5; float ymin = -.1; float wh = 0.15;2q
+double xmin = -1.5;
+double ymin = -.5;
+double w = 2;
+double h = 1;
+double zoomLevel = 1;
+int zoomCount = 0;
+
+double dButtW = .4;
+double dButtH = .7;
+int dButtMin = 130;
+int dButtMax = dButtMin + 35;
+PImage img;
+
+void setup() {
+ //size(320, 180); 
+ size(640, 360); 
+ //size(960, 540);
+ img = loadImage("dickbutt.jpg");
+}
+
+void draw() {  
+  
+  //float xmin = -3;
+  //float ymin = -1.25;
+  //float w = 5;
+  //float h = 2.5;
+  background(255);
+  
+  // Make sure we can write to the pixels[] array.
+  // Only need to do this once since we don't do any other drawing.
+  loadPixels();
+  
+  // Maximum number of iterations for each point on the complex plane
+  int maxiterations = 100 + zoomCount;
+  // x goes from xmin to xmax
+  double xmax = xmin + w;
+  // y goes from ymin to ymax
+  double ymax = ymin + h;
+  
+  // Calculate amount we increment x,y for each pixel
+  double dx = (xmax - xmin) / (width);
+  double dy = (ymax - ymin) / (height);
+  
+  // Start y
+  double y = ymin;
+  for (int j = 0; j < height; j++) {
+    // Start x
+    double x = xmin;
+    for (int i = 0;  i < width; i++) {
+      int n = 0;
+      switch(mode) {
+        case 0: 
+          n = Mandelbrot(x,y, maxiterations);
+          break;
+        case 1:
+          n = Julia_Linear(x,y, maxiterations);
+          break;
+        case 2:
+          n = Julia_Squared(x,y, maxiterations);
+          break;
+        case 3:
+          n = Julia_Cubed(x,y, maxiterations);
+          break;
+        case 4:
+          n = Julia_Quartic(x,y, maxiterations);
+          break;
+        case 5:
+          n = Julia_Quintic(x,y, maxiterations);
+          break;
+        case 6:
+          n = Julia_Random(x,y, maxiterations);
+          break;
+        case 7:
+          n = Julia_Exp(x,y, maxiterations);
+          break;
+        case 8:
+          n = Julia_ZExp(x,y, maxiterations);
+          break;       
+        case 9:
+          n = Julia_SINH(x,y, maxiterations);
+          break;    
+        default:
+          n = Mandelbrot(x,y, maxiterations);
+          break;
+      }
+
+      // We color each pixel based on how long it takes to get to infinity
+      // If we never got there, let's pick the color black
+      if (n == maxiterations) {
+        pixels[i+j*width] = color(0);
+      }
+      else {
+        // Gosh, we could make fancy colors here if we wanted
+        pixels[i+j*width] = color(n*4*colorBoost % 255, n*3*colorBoost % 255, n*2*colorBoost % 255);
+      }
+      x += dx;
+    }
+    y += dy;
+  }
+  updatePixels();
+  //170 zoom level is near the limit
+  //spawn the dickbutts
+  if (zoomCount > dButtMin) {
+    tint(255, (zoomCount - dButtMin)*255/(dButtMax - dButtMin)); 
+    image(img, width/2 - (float)dButtW*5/2, height/2 - (float)dButtH*3/2, (float)dButtW, (float)dButtH);
+    image(img, width/2 - (float)dButtW*3/2, height/2 - (float)dButtH*3/2, (float)dButtW, (float)dButtH);
+    image(img, width/2 - (float)dButtW/2, height/2 - (float)dButtH*3/2, (float)dButtW, (float)dButtH);
+    image(img, width/2 + (float)dButtW/2, height/2 - (float)dButtH*3/2, (float)dButtW, (float)dButtH);
+    image(img, width/2 + (float)dButtW*3/2, height/2 - (float)dButtH*3/2, (float)dButtW, (float)dButtH);
+    
+    image(img, width/2 - (float)dButtW*5/2, height/2 - (float)dButtH/2, (float)dButtW, (float)dButtH);
+    image(img, width/2 - (float)dButtW*3/2, height/2 - (float)dButtH/2, (float)dButtW, (float)dButtH);
+    image(img, width/2 - (float)dButtW/2, height/2 - (float)dButtH/2, (float)dButtW, (float)dButtH);
+    image(img, width/2 + (float)dButtW/2, height/2 - (float)dButtH/2, (float)dButtW, (float)dButtH);
+    image(img, width/2 + (float)dButtW*3/2, height/2 - (float)dButtH/2, (float)dButtW, (float)dButtH);
+    
+    image(img, width/2 - (float)dButtW*5/2, height/2 + (float)dButtH/2, (float)dButtW, (float)dButtH);
+    image(img, width/2 - (float)dButtW*3/2, height/2 + (float)dButtH/2, (float)dButtW, (float)dButtH);
+    image(img, width/2 - (float)dButtW/2, height/2 + (float)dButtH/2, (float)dButtW, (float)dButtH);
+    image(img, width/2 + (float)dButtW/2, height/2 + (float)dButtH/2, (float)dButtW, (float)dButtH);
+    image(img, width/2 + (float)dButtW*3/2, height/2 + (float)dButtH/2, (float)dButtW, (float)dButtH);
+    
+  }
+  //println(zoomCount);
+  
+}
+
+
+void mouseWheel(MouseEvent event) {
+  float e = event.getCount();
+  if (e > 0) {
+    zoomCount -= 1;
+    zoomLevel /= 1.2; 
+    double oldw = w;
+    double oldh = h;
+    w *= 1.2;
+    h *= 1.2;
+    double xcenter = w/2;
+    double ycenter = h/2;
+    double xmouse = ((mouseX+ .0)/width - .5)/ (2*zoomLevel);
+    double ymouse = ((mouseY + .0)/height - .5)/ (2*zoomLevel);
+    xmin += (oldw - w)/2; //make it zoom into the center
+    ymin += (oldh - h)/2; //make it zoom into the center
+    //make it zoom also depending on the cursor's position
+    xmin += xmouse;
+    ymin += ymouse;
+    if (zoomCount > dButtMin && zoomCount < dButtMax) {
+      dButtW /= 1.2;
+      dButtH /= 1.2;
+    }
+  }
+  else {
+    zoomCount += 1;
+    zoomLevel *= 1.2; 
+    double oldw = w;
+    double oldh = h;
+    w /= 1.2;
+    h /= 1.2;
+    double xcenter = w/2;
+    double ycenter = h/2;
+    double xmouse = ((mouseX+ .0)/width - .5)/ (2*zoomLevel);
+    double ymouse = ((mouseY + .0)/height - .5)/ (2*zoomLevel);
+    xmin += (oldw - w)/2; //make it zoom into the center
+    ymin += (oldh - h)/2; //make it zoom into the center
+    //make it zoom also depending on the cursor's position
+    xmin += xmouse;
+    ymin += ymouse;
+    
+    if (zoomCount > dButtMin && zoomCount < dButtMax) {
+      dButtW *= 1.2;
+      dButtH *= 1.2;
+    }
+  }
+
+}
+
+void keyPressed() { //use arrow keys to move around the set. it will move less depending on how zoomed in you are
+  if (key == CODED) {
+    if (keyCode == UP) {
+      ymin -= .1/zoomLevel;
+    } else if (keyCode == DOWN) {
+      ymin += .1/zoomLevel;
+    } else if (keyCode == LEFT) {
+      xmin -= .1/zoomLevel;
+    } else if (keyCode == RIGHT) {
+      xmin += .1/zoomLevel;
+    } 
+  }
+  // If the return key is pressed, save the String and clear it
+  if (key == 'z' ) {
+    RE = random(-2, 2);
+    IM = random(-2, 2);
+    println("\nREAL: " + RE);
+    println("IMAG: " + IM);
+  } else if (key == 'x'){
+    RE = random(-2, 2);
+    IM = 0;
+    println("\nREAL: " + RE);
+    println("IMAG: " + IM);
+  }
+  else if (key == '0'){
+    mode = 0;
+  }
+  else if (key == '1'){
+    mode = 1;
+  }
+  else if (key == '2'){
+    mode = 2;
+  }
+  else if (key == '3'){
+    mode = 3;
+  }
+  else if (key == '4'){
+    mode = 4;
+  }
+  else if (key == '5'){
+    mode = 5;
+  }
+  else if (key == '6'){
+    mode = 6;
+  }
+  else if (key == '7'){
+    mode = 7;
+  }
+  else if (key == '8'){
+    mode = 8;
+  }
+  else if (key == '9'){
+    mode = 9;
+  }
+}
+
+//ALL THE DIFFERENT FRACTALS THAT THIS PROGRAM SUPPORTS
+int Mandelbrot(double x, double y, int maxiterations) {
+  // Now we test, as we iterate z = z^2 + cm does z tend towards infinity?
+  double a = x;
+  double b = y;
+  int n = 0;
+  while (n < maxiterations) {
+    double aa = a * a;
+    double bb = b * b;
+    double twoab = 2.0 * a * b;
+    a = aa - bb + x;
+    b = twoab + y;
+    // Infinty in our finite world is simple, let's just consider it 16
+    if (aa + bb > 16.0) {
+      break;  // Bail
+    }
+    n++;
+  }
+  return n;
+}
+
+int Julia_Linear(double x, double y, int maxiterations) {
+  double a = x;
+  double b = y;
+  int n = 0;
+  while (n < maxiterations) {
+    double aa = a * a;
+    double bb = b * b;
+    a = a + RE;
+    b = b + IM;
+    // Infinty in our finite world is simple, let's just consider it 16
+    if (aa + bb > 16.0) {
+      break;  // Bail
+    }
+    n++;
+  }
+  return n;
+}
+
+int Julia_Squared(double x, double y, int maxiterations) {
+  // Now we test, as we iterate z = z^2 + cm does z tend towards infinity?
+  double a = x;
+  double b = y;
+  int n = 0;
+  while (n < maxiterations) {
+    double aa = a * a;
+    double bb = b * b;
+    double twoab = 2.0 * a * b;
+    a = aa - bb + RE;
+    b = twoab + IM;
+    // Infinty in our finite world is simple, let's just consider it 16
+    if (aa + bb > 16.0) {
+      break;  // Bail
+    }
+    n++;
+  }
+  return n;
+}
+
+int Julia_Cubed(double x, double y, int maxiterations) {
+  double a = x;
+  double b = y;
+  int n = 0;
+  while (n < maxiterations) {
+    double aa = a * a;
+    double bb = b * b;
+    double realTerms = (aa*a) - (3*a*bb) + RE;
+    double imagTerms = (3*aa*b) - (bb*b) + IM;
+    a = realTerms;
+    b = imagTerms;
+    // Infinty in our finite world is simple, let's just consider it 16
+    if (aa + bb > 16.0) {
+      break;  // Bail
+    }
+    n++;
+  }
+  return n;
+}
+
+int Julia_Quartic(double x, double y, int maxiterations) {
+  double a = x;
+  double b = y;
+  int n = 0;
+  while (n < maxiterations) {
+    double aa = a * a;
+    double bb = b * b;
+    double realTerms = (aa*aa) - (6*aa*bb) + (bb*bb) + RE;
+    double imagTerms = (4*aa*a*b) - (4*a*bb*b) + IM;
+    a = realTerms;
+    b = imagTerms;
+    // Infinty in our finite world is simple, let's just consider it 16
+    if (aa + bb > 16.0) {
+      break;  // Bail
+    }
+    n++;
+  }
+  return n;
+}
+
+int Julia_Quintic(double x, double y, int maxiterations) {
+  double a = x;
+  double b = y;
+  int n = 0;
+  while (n < maxiterations) {
+    double aa = a * a;
+    double bb = b * b;
+    double realTerms = (aa*aa*a) - (10*aa*a*bb) + (5*a*bb*bb) + RE;
+    double imagTerms = (5*aa*aa*b) - (10*aa*bb*b) + (bb*bb*b) + IM;
+    a = realTerms;
+    b = imagTerms;
+    // Infinty in our finite world is simple, let's just consider it 16
+    if (aa + bb > 16.0) {
+      break;  // Bail
+    }
+    n++;
+  }
+  return n;
+}
+
+int Julia_Random(double x, double y, int maxiterations) {
+  double a = x;
+  double b = y;
+  int n = 0;
+  while (n < maxiterations) {
+    double aa = a * a;
+    double bb = b * b;
+    double realTerms = random((float)a) + RE ;
+    double imagTerms = random((float)b) + IM ;
+    a = realTerms*a;
+    b = imagTerms*b;
+    // Infinty in our finite world is simple, let's just consider it 16
+    if (aa + bb > 16.0) {
+      break;  // Bail
+    }
+    n++;
+  }
+  return n;
+}
+
+int Julia_Exp(double x, double y, int maxiterations) {
+  double a = x;
+  double b = y;
+  int n = 0;
+  while (n < maxiterations) {
+    double aa = a * a;
+    double bb = b * b;
+    float  expa = exp((float)a);
+    double realTerms = expa*cos((float)b) + RE ;
+    double imagTerms = expa*sin((float)b) + IM ;
+    a = realTerms;
+    b = imagTerms;
+    // Infinty in our finite world is simple, let's just consider it 16
+    if (aa + bb > 16.0) {
+      break;  // Bail
+    }
+    n++;
+  }
+  return n;
+}
+
+int Julia_ZExp(double x, double y, int maxiterations) {
+  double a = x;
+  double b = y;
+  int n = 0;
+  while (n < maxiterations) {
+    double aa = a * a;
+    double bb = b * b;
+    float  expa = exp((float)a);
+    double realTerms = a*expa*cos((float)b) - (b*expa*sin((float)(b))) + RE ;
+    double imagTerms = a*expa*sin((float)b) + (b*expa*cos((float)(b))) + IM ;
+    a = realTerms;
+    b = imagTerms;
+    // Infinty in our finite world is simple, let's just consider it 16
+    if (aa + bb > 16.0) {
+      break;  // Bail
+    }
+    n++;
+  }
+  return n;
+}
+
+int Julia_SINH(double x, double y, int maxiterations) {
+  double a = x;
+  double b = y;
+  int n = 0;
+  while (n < maxiterations) {
+    double aa = a * a;
+    double bb = b * b;
+    float  expa = exp((float)a);
+    float  expnega = exp((float)(-a));
+    double realTerms = (expa-expnega)/2 * cos((float)b) + RE ;
+    double imagTerms = (expa+expnega)/2 * sin((float)b) + IM ;
+    a = realTerms;
+    b = imagTerms;
+    // Infinty in our finite world is simple, let's just consider it 16
+    if (aa + bb > 16.0) {
+      break;  // Bail
+    }
+    n++;
+  }
+  return n;
+}
