@@ -1,4 +1,4 @@
-/**
+/** ORIGINAL SOURCE TAKEN FROM HERE: https://processing.org/examples/mandelbrot.html
       Change the mode to change the fractal.
       0 = Mandelbrot set. RE and IM will not be used.
       1 = uses iterative function f(Z) = Z + C, where C is (RE + IM*i)
@@ -16,9 +16,9 @@
       Pressing Z will create a random complex number from (-2, -2i) to (2, 2i)
       Pressing X will create a random real number from -2 to 2
 **/
-int mode = 0;
-double RE = 0;
-double IM = 0;
+int mode = 5;
+double RE = -.7586;
+double IM = .4905;
 float colorBoost = 4; //how much color you want the fractal to have
 
 /**
@@ -45,11 +45,11 @@ void setup() {
  //size(320, 180); 
  size(640, 360); 
  //size(960, 540);
+ //size(1280, 720);
  img = loadImage("dickbutt.jpg");
 }
 
 void draw() {  
-  
   //float xmin = -3;
   //float ymin = -1.25;
   //float w = 5;
@@ -257,6 +257,9 @@ void keyPressed() { //use arrow keys to move around the set. it will move less d
   }
   else if (key == '9'){
     mode = 9;
+  }
+  else if (key == 's') {
+    //save("fractal.bmp");
   }
 }
 
